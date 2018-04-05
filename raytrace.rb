@@ -52,17 +52,19 @@ MAX_Y = Math.tan(VERTICAL_FOV / 4.0) * MAX_DEPTH
 MIN_Z = 0.0
 MAX_Z = MAX_DEPTH
 
+random = Random.new
+
 blocks = (0...MAX_BLOCKS).map do
   block = Block.new
-  block.x = Random.rand(MAX_X - MIN_X) + MIN_X
-  block.y = Random.rand(MAX_Y - MIN_Y) + MIN_Y
-  block.z = Random.rand(MAX_Z - MIN_Z) + MIN_Z
-  block.width = Random.rand(50.0)
-  block.height = Random.rand(50.0)
-  block.depth = Random.rand(50.0)
-  block.r = Random.rand(255)
-  block.g = Random.rand(255)
-  block.b = Random.rand(255)
+  block.x = random.rand(MAX_X - MIN_X) + MIN_X
+  block.y = random.rand(MAX_Y - MIN_Y) + MIN_Y
+  block.z = random.rand(MAX_Z - MIN_Z) + MIN_Z
+  block.width = random.rand(50.0)
+  block.height = random.rand(50.0)
+  block.depth = random.rand(50.0)
+  block.r = random.rand(255)
+  block.g = random.rand(255)
+  block.b = random.rand(255)
   block
 end
 
@@ -110,4 +112,4 @@ base_z = 1.0
   break if trapped
 end
 
-image.save('filename.png', interlace: true)
+image.save("#{random.seed}.png", interlace: true)
