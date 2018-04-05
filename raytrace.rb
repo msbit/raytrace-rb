@@ -66,7 +66,7 @@ blocks = (0...MAX_BLOCKS).map do
   block
 end
 
-image = ChunkyPNG::Image.new(WIDTH, HEIGHT, ChunkyPNG::Color::TRANSPARENT)
+image = ChunkyPNG::Image.new(WIDTH, HEIGHT, ChunkyPNG::Color::BLACK)
 
 trapped = false
 trap('INT') do
