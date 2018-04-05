@@ -73,38 +73,79 @@ trap('INT') do
   trapped = true
 end
 
-base_z = 1.0
-(0...WIDTH).each do |x|
-  azimuth = ((x * HORIZONTAL_FOV) / WIDTH) - (HORIZONTAL_FOV / 2.0)
-  base_x = Math.tan(azimuth)
-  (0...HEIGHT).each do |y|
-    attitude = ((y * VERTICAL_FOV) / HEIGHT) - (VERTICAL_FOV / 2.0)
-    base_y = Math.tan(attitude)
+previous_step = nil
 
-    intercepted = false
-    (0.0...MAX_DEPTH).step(1.0) do |depth|
-      ray_x = base_x * depth
-      ray_y = base_y * depth
-      ray_z = base_z * depth
+[32, 16, 8, 4, 2, 1].each do |step|
+  (0...WIDTH).step(step) do |x|
+    azimuth = ((x * HORIZONTAL_FOV) / WIDTH) - (HORIZONTAL_FOV / 2.0)
+    base_x = Math.tan(azimuth)
+    (0...HEIGHT).step(step) do |y|
+      next if previous_step && (x % previous_step == 0) && (y % previous_step == 0)
+      attitude = ((y * VERTICAL_FOV) / HEIGHT) - (VERTICAL_FOV / 2.0)
+      base_y = Math.tan(attitude)
 
-      blocks.each_with_index do |block, i|
-        if block.contains(ray_x, ray_y, ray_z)
-          length = Math.sqrt(ray_x * ray_x + ray_y * ray_y + ray_z * ray_z)
-          brightness = [MAX_DEPTH - length, 0.0].max / MAX_DEPTH
-          image[x, y] = ChunkyPNG::Color.rgba((block.r * brightness).to_i, (block.g * brightness).to_i, (block.b * brightness).to_i, 255)
-          intercepted = true
-          break
+      intercepted = false
+      (0.0...(MAX_DEPTH / 4.0)).step(0.5) do |depth|
+        ray_x = base_x * depth
+        ray_y = base_y * depth
+        ray_z = depth
+
+        blocks.each_with_index do |block, i|
+          if block.contains(ray_x, ray_y, ray_z)
+            length = Math.sqrt(ray_x * ray_x + ray_y * ray_y + ray_z * ray_z)
+            brightness = [MAX_DEPTH - length, 0.0].max / MAX_DEPTH
+            colour = ChunkyPNG::Color.rgba((block.r * brightness).to_i, (block.g * brightness).to_i, (block.b * brightness).to_i, 255)
+            image.rect(x, y, x + (step - 1), y + (step - 1), colour, colour)
+            intercepted = true
+            break
+          end
         end
+        break if intercepted
       end
-      break if intercepted
-    end
+      next if intercepted
 
-    unless intercepted
-      image[x, y] = ChunkyPNG::Color.rgba(0, 0, 0, 255)
+      ((MAX_DEPTH / 4.0)...(MAX_DEPTH / 2.0)).step(1.0) do |depth|
+        ray_x = base_x * depth
+        ray_y = base_y * depth
+        ray_z = depth
+
+        blocks.each_with_index do |block, i|
+          if block.contains(ray_x, ray_y, ray_z)
+            length = Math.sqrt(ray_x * ray_x + ray_y * ray_y + ray_z * ray_z)
+            brightness = [MAX_DEPTH - length, 0.0].max / MAX_DEPTH
+            colour = ChunkyPNG::Color.rgba((block.r * brightness).to_i, (block.g * brightness).to_i, (block.b * brightness).to_i, 255)
+            image.rect(x, y, x + (step - 1), y + (step - 1), colour, colour)
+            intercepted = true
+            break
+          end
+        end
+        break if intercepted
+      end
+      next if intercepted
+
+      ((MAX_DEPTH / 2.0)...MAX_DEPTH).step(2.0) do |depth|
+        ray_x = base_x * depth
+        ray_y = base_y * depth
+        ray_z = depth
+
+        blocks.each_with_index do |block, i|
+          if block.contains(ray_x, ray_y, ray_z)
+            length = Math.sqrt(ray_x * ray_x + ray_y * ray_y + ray_z * ray_z)
+            brightness = [MAX_DEPTH - length, 0.0].max / MAX_DEPTH
+            colour = ChunkyPNG::Color.rgba((block.r * brightness).to_i, (block.g * brightness).to_i, (block.b * brightness).to_i, 255)
+            image.rect(x, y, x + (step - 1), y + (step - 1), colour, colour)
+            intercepted = true
+            break
+          end
+        end
+        break if intercepted
+      end
     end
+    GC.start
+    break if trapped
   end
-  GC.start
-  break if trapped
-end
 
-image.save("#{random.seed}.png", interlace: true)
+  previous_step = step
+
+  image.save("#{random.seed}.png", interlace: true)
+end
