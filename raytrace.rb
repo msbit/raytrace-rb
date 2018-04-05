@@ -2,12 +2,6 @@
 
 require 'chunky_png'
 
-class Time
-  def msec
-    to_i * 1000 + (usec / 1000)
-  end
-end
-
 class Block
   attr_accessor :x, :y, :z
   attr_accessor :width, :height, :depth
@@ -79,7 +73,6 @@ base_z = 1.0
 (0...WIDTH).each do |x|
   azimuth = ((x * HORIZONTAL_FOV) / WIDTH) - (HORIZONTAL_FOV / 2.0)
   base_x = Math.tan(azimuth)
-  column_render_start = Time.now.msec
   (0...HEIGHT).each do |y|
     attitude = ((y * VERTICAL_FOV) / HEIGHT) - (VERTICAL_FOV / 2.0)
     base_y = Math.tan(attitude)
@@ -106,8 +99,6 @@ base_z = 1.0
       image[x, y] = ChunkyPNG::Color.rgba(0, 0, 0, 255)
     end
   end
-  column_render_end = Time.now.msec
-  puts "column_render_#{x}: #{column_render_end - column_render_start}ms"
   GC.start
   break if trapped
 end
