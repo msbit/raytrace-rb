@@ -46,7 +46,11 @@ MAX_Y = Math.tan(VERTICAL_FOV / 4.0) * MAX_DEPTH
 MIN_Z = 0.0
 MAX_Z = MAX_DEPTH
 
-random = Random.new
+random = if ARGV.size
+           Random.new(ARGV[0].to_i)
+         else
+           Random.new
+         end
 
 blocks = (0...MAX_BLOCKS).map do
   block = Block.new
