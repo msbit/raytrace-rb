@@ -130,5 +130,5 @@ blocks = generate_blocks(30, random, MIN_X, MAX_X, MIN_Y, MAX_Y, MIN_Z, MAX_Z)
 
 image = ChunkyPNG::Image.new(WIDTH, HEIGHT, ChunkyPNG::Color::BLACK)
 
-raytracer = RayTracer.new(0.1, 2.5, 0.0, MAX_DEPTH)
+raytracer = RayTracer.new(0.25, 0.25, 0.0, MAX_DEPTH)
 raytracer.render(WIDTH, HEIGHT, HORIZONTAL_FOV, VERTICAL_FOV, blocks, image, random.seed)
