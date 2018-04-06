@@ -30,6 +30,11 @@ class Block
   end
 end
 
+def map(input_min, input_max, output_min, output_max, input)
+  scale_factor = (output_max - output_min) / (input_max - input_min)
+  input * scale_factor + output_min
+end
+
 WIDTH = 1280
 HEIGHT = 800
 
@@ -47,7 +52,6 @@ MIN_Z = 0.0
 MAX_Z = MAX_DEPTH
 
 random = if ARGV.size > 0
-           puts ARGV[0].to_i
            Random.new(ARGV[0].to_i)
          else
            Random.new
@@ -74,6 +78,9 @@ trap('INT') do
   trapped = true
 end
 
+MIN_DEPTH_DELTA = 0.1
+MAX_DEPTH_DELTA = 2.5
+
 previous_resolution = nil
 
 [32, 16, 8, 4, 2, 1].each do |resolution|
@@ -86,7 +93,8 @@ previous_resolution = nil
       base_y = Math.tan(attitude)
 
       intercepted = false
-      (0.0...(MAX_DEPTH / 4.0)).step(0.5) do |depth|
+      depth = MIN_DEPTH_DELTA
+      until depth >= MAX_DEPTH
         ray_x = base_x * depth
         ray_y = base_y * depth
         ray_z = depth
@@ -102,47 +110,9 @@ previous_resolution = nil
           end
         end
         break if intercepted
-      end
-      next if intercepted
-
-      ((MAX_DEPTH / 4.0)...(MAX_DEPTH / 2.0)).step(1.0) do |depth|
-        ray_x = base_x * depth
-        ray_y = base_y * depth
-        ray_z = depth
-
-        blocks.each_with_index do |block, i|
-          if block.contains(ray_x, ray_y, ray_z)
-            length = Math.sqrt(ray_x * ray_x + ray_y * ray_y + ray_z * ray_z)
-            brightness = [MAX_DEPTH - length, 0.0].max / MAX_DEPTH
-            colour = ChunkyPNG::Color.rgba((block.r * brightness).to_i, (block.g * brightness).to_i, (block.b * brightness).to_i, 255)
-            image.rect(x, y, x + (resolution - 1), y + (resolution - 1), colour, colour)
-            intercepted = true
-            break
-          end
-        end
-        break if intercepted
-      end
-      next if intercepted
-
-      ((MAX_DEPTH / 2.0)...MAX_DEPTH).step(2.0) do |depth|
-        ray_x = base_x * depth
-        ray_y = base_y * depth
-        ray_z = depth
-
-        blocks.each_with_index do |block, i|
-          if block.contains(ray_x, ray_y, ray_z)
-            length = Math.sqrt(ray_x * ray_x + ray_y * ray_y + ray_z * ray_z)
-            brightness = [MAX_DEPTH - length, 0.0].max / MAX_DEPTH
-            colour = ChunkyPNG::Color.rgba((block.r * brightness).to_i, (block.g * brightness).to_i, (block.b * brightness).to_i, 255)
-            image.rect(x, y, x + (resolution - 1), y + (resolution - 1), colour, colour)
-            intercepted = true
-            break
-          end
-        end
-        break if intercepted
+        depth += map(0.0, MAX_DEPTH, MIN_DEPTH_DELTA, MAX_DEPTH_DELTA, depth)
       end
     end
-    GC.start
     break if trapped
   end
 
