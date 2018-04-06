@@ -74,14 +74,14 @@ trap('INT') do
   trapped = true
 end
 
-previous_step = nil
+previous_resolution = nil
 
-[32, 16, 8, 4, 2, 1].each do |step|
-  (0...WIDTH).step(step) do |x|
+[32, 16, 8, 4, 2, 1].each do |resolution|
+  (0...WIDTH).step(resolution) do |x|
     azimuth = ((x * HORIZONTAL_FOV) / WIDTH) - (HORIZONTAL_FOV / 2.0)
     base_x = Math.tan(azimuth)
-    (0...HEIGHT).step(step) do |y|
-      next if previous_step && (x % previous_step == 0) && (y % previous_step == 0)
+    (0...HEIGHT).step(resolution) do |y|
+      next if previous_resolution && (x % previous_resolution == 0) && (y % previous_resolution == 0)
       attitude = ((y * VERTICAL_FOV) / HEIGHT) - (VERTICAL_FOV / 2.0)
       base_y = Math.tan(attitude)
 
@@ -96,7 +96,7 @@ previous_step = nil
             length = Math.sqrt(ray_x * ray_x + ray_y * ray_y + ray_z * ray_z)
             brightness = [MAX_DEPTH - length, 0.0].max / MAX_DEPTH
             colour = ChunkyPNG::Color.rgba((block.r * brightness).to_i, (block.g * brightness).to_i, (block.b * brightness).to_i, 255)
-            image.rect(x, y, x + (step - 1), y + (step - 1), colour, colour)
+            image.rect(x, y, x + (resolution - 1), y + (resolution - 1), colour, colour)
             intercepted = true
             break
           end
@@ -115,7 +115,7 @@ previous_step = nil
             length = Math.sqrt(ray_x * ray_x + ray_y * ray_y + ray_z * ray_z)
             brightness = [MAX_DEPTH - length, 0.0].max / MAX_DEPTH
             colour = ChunkyPNG::Color.rgba((block.r * brightness).to_i, (block.g * brightness).to_i, (block.b * brightness).to_i, 255)
-            image.rect(x, y, x + (step - 1), y + (step - 1), colour, colour)
+            image.rect(x, y, x + (resolution - 1), y + (resolution - 1), colour, colour)
             intercepted = true
             break
           end
@@ -134,7 +134,7 @@ previous_step = nil
             length = Math.sqrt(ray_x * ray_x + ray_y * ray_y + ray_z * ray_z)
             brightness = [MAX_DEPTH - length, 0.0].max / MAX_DEPTH
             colour = ChunkyPNG::Color.rgba((block.r * brightness).to_i, (block.g * brightness).to_i, (block.b * brightness).to_i, 255)
-            image.rect(x, y, x + (step - 1), y + (step - 1), colour, colour)
+            image.rect(x, y, x + (resolution - 1), y + (resolution - 1), colour, colour)
             intercepted = true
             break
           end
@@ -146,7 +146,7 @@ previous_step = nil
     break if trapped
   end
 
-  previous_step = step
+  previous_resolution = resolution
 
   image.save("#{random.seed}.png", interlace: true)
 end
