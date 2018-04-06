@@ -46,7 +46,8 @@ MAX_Y = Math.tan(VERTICAL_FOV / 4.0) * MAX_DEPTH
 MIN_Z = 0.0
 MAX_Z = MAX_DEPTH
 
-random = if ARGV.size
+random = if ARGV.size > 0
+           puts ARGV[0].to_i
            Random.new(ARGV[0].to_i)
          else
            Random.new
