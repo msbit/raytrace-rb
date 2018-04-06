@@ -83,6 +83,18 @@ MAX_DEPTH_DELTA = 2.5
 
 previous_resolution = nil
 
+def precalc_depths
+  depths = [MIN_DEPTH_DELTA]
+  depth = MIN_DEPTH_DELTA
+  until depth >= MAX_DEPTH
+    depth += map(0.0, MAX_DEPTH, MIN_DEPTH_DELTA, MAX_DEPTH_DELTA, depth)
+    depths << depth
+  end
+  depths
+end
+
+precalced_depths = precalc_depths
+
 [32, 16, 8, 4, 2, 1].each do |resolution|
   (0...WIDTH).step(resolution) do |x|
     azimuth = ((x * HORIZONTAL_FOV) / WIDTH) - (HORIZONTAL_FOV / 2.0)
@@ -93,8 +105,7 @@ previous_resolution = nil
       base_y = Math.tan(attitude)
 
       intercepted = false
-      depth = MIN_DEPTH_DELTA
-      until depth >= MAX_DEPTH
+      precalced_depths.each do |depth|
         ray_x = base_x * depth
         ray_y = base_y * depth
         ray_z = depth
@@ -110,7 +121,6 @@ previous_resolution = nil
           end
         end
         break if intercepted
-        depth += map(0.0, MAX_DEPTH, MIN_DEPTH_DELTA, MAX_DEPTH_DELTA, depth)
       end
     end
     break if trapped
