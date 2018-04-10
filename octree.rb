@@ -73,9 +73,9 @@ class Octree
   end
 
   def query_range(axis_aligned_bounding_block, result_blocks)
-    return unless @axis_aligned_bounding_block.intersects(axis_aligned_bounding_block)
+    return unless @blocks.any? && @axis_aligned_bounding_block.intersects(axis_aligned_bounding_block)
 
-    blocks.each do |_, block|
+    @blocks.each do |_, block|
       result_blocks[block.id] = block if axis_aligned_bounding_block.intersects(block)
     end
 

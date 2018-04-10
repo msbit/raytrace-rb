@@ -3,35 +3,23 @@ class AxisAlignedBoundingBlock
   attr_accessor :width, :height, :depth
 
   def initialize(origin_x, origin_y, origin_z, width, height, depth)
-    @origin_x = origin_x 
-    @origin_y = origin_y 
-    @origin_z = origin_z 
+    @origin_x = origin_x
+    @origin_y = origin_y
+    @origin_z = origin_z
     @width = width
     @height = height
     @depth = depth
-  end 
+  end
 
   def contains(test_x, test_y, test_z)
-    if test_x < @origin_x 
-      return false
-    end 
-    if test_y < @origin_y 
-      return false
-    end 
-    if test_z < @origin_z 
-      return false
-    end 
-    if test_x > (@origin_x + @width)
-      return false
-    end 
-    if test_y > (@origin_y + @height)
-      return false
-    end 
-    if test_z > (@origin_z + @depth)
-      return false
-    end 
+    return false if test_x < @origin_x
+    return false if test_y < @origin_y
+    return false if test_z < @origin_z
+    return false if test_x > (@origin_x + @width)
+    return false if test_y > (@origin_y + @height)
+    return false if test_z > (@origin_z + @depth)
     true
-  end 
+  end
 
   def intersects(other)
     return false if (other.origin_x + other.width) < @origin_x
