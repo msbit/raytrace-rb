@@ -1,33 +1,28 @@
 class AxisAlignedBoundingBlock
-  attr_accessor :origin_x, :origin_y, :origin_z
-  attr_accessor :width, :height, :depth
+  attr_accessor :origin, :extent
 
-  def initialize(origin_x, origin_y, origin_z, width, height, depth)
-    @origin_x = origin_x
-    @origin_y = origin_y
-    @origin_z = origin_z
-    @width = width
-    @height = height
-    @depth = depth
+  def initialize(origin, extent)
+    @origin = origin
+    @extent = extent
   end
 
   def contains(test_x, test_y, test_z)
-    return false if test_x < @origin_x
-    return false if test_y < @origin_y
-    return false if test_z < @origin_z
-    return false if test_x > (@origin_x + @width)
-    return false if test_y > (@origin_y + @height)
-    return false if test_z > (@origin_z + @depth)
+    return false if test_x < @origin.x
+    return false if test_y < @origin.y
+    return false if test_z < @origin.z
+    return false if test_x > @extent.x
+    return false if test_y > @extent.y
+    return false if test_z > @extent.z
     true
   end
 
   def intersects(other)
-    return false if (other.origin_x + other.width) < @origin_x
-    return false if (other.origin_y + other.height) < @origin_y
-    return false if (other.origin_z + other.depth) < @origin_z
-    return false if other.origin_x > (@origin_x + @width)
-    return false if other.origin_y > (@origin_y + @height)
-    return false if other.origin_z > (@origin_z + @depth)
+    return false if other.extent.x < @origin.x
+    return false if other.extent.y < @origin.y
+    return false if other.extent.z < @origin.z
+    return false if other.origin.x > @extent.x
+    return false if other.origin.y > @extent.y
+    return false if other.origin.z > @extent.z
     true
   end
 end

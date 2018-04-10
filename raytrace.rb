@@ -5,15 +5,18 @@ require 'chunky_png'
 require File.expand_path("./axis_aligned_bounding_block.rb", __dir__)
 require File.expand_path("./block.rb", __dir__)
 require File.expand_path("./octree.rb", __dir__)
+require File.expand_path("./point.rb", __dir__)
 require File.expand_path("./raytracer.rb", __dir__)
 
-def generate_blocks(block_count, random, min_x, max_x, min_y, max_y, min_z, max_z)
+def generate_blocks(block_count, random, scene_origin, scene_extent)
   (0...block_count).map do
-    Block.new(
-      random.rand(max_x - min_x) + min_x, random.rand(max_y - min_y) + min_y, random.rand(max_z - min_z) + min_z,
-      random.rand(50.0), random.rand(50.0), random.rand(50.0),
-      random.rand(255), random.rand(255), random.rand(255)
-    )
+    block_origin = Point.new(random.rand(scene_extent.x - scene_origin.x) + scene_origin.x,
+                             random.rand(scene_extent.y - scene_origin.y) + scene_origin.y,
+                             random.rand(scene_extent.z - scene_origin.z) + scene_origin.z)
+    block_extent = Point.new(block_origin.x + random.rand(50.0),
+                             block_origin.y + random.rand(50.0),
+                             block_origin.z + random.rand(50.0))
+    Block.new(block_origin, block_extent, random.rand(255), random.rand(255), random.rand(255))
   end
 end
 
@@ -25,12 +28,8 @@ VERTICAL_FOV = HORIZONTAL_FOV * (HEIGHT.to_f / WIDTH.to_f)
 
 MAX_DEPTH = 200.0
 
-MIN_X = Math.tan(- (HORIZONTAL_FOV / 4.0)) * MAX_DEPTH
-MAX_X = Math.tan(HORIZONTAL_FOV / 4.0) * MAX_DEPTH
-MIN_Y = Math.tan(- (VERTICAL_FOV / 4.0)) * MAX_DEPTH
-MAX_Y = Math.tan(VERTICAL_FOV / 4.0) * MAX_DEPTH
-MIN_Z = 0.0
-MAX_Z = MAX_DEPTH
+scene_origin = Point.new(Math.tan(- (HORIZONTAL_FOV / 4.0)) * MAX_DEPTH, Math.tan(- (VERTICAL_FOV / 4.0)) * MAX_DEPTH, 0.0)
+scene_extent = Point.new(Math.tan(HORIZONTAL_FOV / 4.0) * MAX_DEPTH,  Math.tan(VERTICAL_FOV / 4.0) * MAX_DEPTH, MAX_DEPTH)
 
 random = if ARGV.size > 0
            Random.new(ARGV[0].to_i)
@@ -38,11 +37,11 @@ random = if ARGV.size > 0
            Random.new
          end
 
-blocks = generate_blocks(30, random, MIN_X, MAX_X, MIN_Y, MAX_Y, MIN_Z, MAX_Z)
+blocks = generate_blocks(30, random, scene_origin, scene_extent)
 
-whole_aabb = AxisAlignedBoundingBlock.new(MIN_X, MIN_Y, MIN_Z, (MAX_X - MIN_X), (MAX_Y - MIN_Y), (MAX_Z - MIN_Z))
+scene_boundary = AxisAlignedBoundingBlock.new(scene_origin, scene_extent)
 
-octree = Octree.new(whole_aabb)
+octree = Octree.new(scene_boundary)
 
 blocks.each do |block|
   octree.insert(block)

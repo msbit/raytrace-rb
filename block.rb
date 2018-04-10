@@ -6,8 +6,8 @@ class Block < AxisAlignedBoundingBlock
   attr_accessor :r, :g, :b
   attr_accessor :id
 
-  def initialize(origin_x, origin_y, origin_z, width, height, depth, r, g, b)
-    super(origin_x, origin_y, origin_z, width, height, depth)
+  def initialize(origin, extent, r, g, b)
+    super(origin, extent)
 
     @r = r
     @g = g
