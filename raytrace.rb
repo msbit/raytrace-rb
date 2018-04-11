@@ -4,11 +4,11 @@ require 'bundler'
 
 Bundler.require
 
-require File.expand_path("./axis_aligned_bounding_block.rb", __dir__)
-require File.expand_path("./block.rb", __dir__)
-require File.expand_path("./octree.rb", __dir__)
-require File.expand_path("./point.rb", __dir__)
-require File.expand_path("./raytracer.rb", __dir__)
+require File.expand_path('./axis_aligned_bounding_block.rb', __dir__)
+require File.expand_path('./block.rb', __dir__)
+require File.expand_path('./octree.rb', __dir__)
+require File.expand_path('./point.rb', __dir__)
+require File.expand_path('./raytracer.rb', __dir__)
 
 def generate_blocks(block_count, random, scene_origin, scene_extent)
   (0...block_count).map do
@@ -31,9 +31,9 @@ VERTICAL_FOV = HORIZONTAL_FOV * (HEIGHT.to_f / WIDTH.to_f)
 MAX_DEPTH = 200.0
 
 scene_origin = Point.new(Math.tan(- (HORIZONTAL_FOV / 4.0)) * MAX_DEPTH, Math.tan(- (VERTICAL_FOV / 4.0)) * MAX_DEPTH, 0.0)
-scene_extent = Point.new(Math.tan(HORIZONTAL_FOV / 4.0) * MAX_DEPTH,  Math.tan(VERTICAL_FOV / 4.0) * MAX_DEPTH, MAX_DEPTH)
+scene_extent = Point.new(Math.tan(HORIZONTAL_FOV / 4.0) * MAX_DEPTH, Math.tan(VERTICAL_FOV / 4.0) * MAX_DEPTH, MAX_DEPTH)
 
-random = if ARGV.size > 0
+random = if !ARGV.empty?
            Random.new(ARGV[0].to_i)
          else
            Random.new

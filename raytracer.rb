@@ -1,9 +1,10 @@
-require File.expand_path("./axis_aligned_bounding_block.rb", __dir__)
-require File.expand_path("./point.rb", __dir__)
+require File.expand_path('./axis_aligned_bounding_block.rb', __dir__)
+require File.expand_path('./point.rb', __dir__)
 
 class RayTracer
   def initialize(min_depth_delta, max_depth_delta, min_depth, max_depth)
-    @precalced_depths = precalc_depths(min_depth_delta, max_depth_delta, min_depth, max_depth)
+    @precalced_depths = precalc_depths(min_depth_delta, max_depth_delta,
+                                       min_depth, max_depth)
   end
 
   def map(input_min, input_max, output_min, output_max, input)
@@ -28,7 +29,7 @@ class RayTracer
         azimuth = ((x * horizontal_fov) / width) - (horizontal_fov / 2.0)
         base_x = Math.tan(azimuth)
         (0...height).step(resolution).map do |y|
-          next if previous_resolution && (x % previous_resolution == 0) && (y % previous_resolution == 0)
+          next if previous_resolution && (x % previous_resolution).zero? && (y % previous_resolution).zero?
           attitude = ((y * vertical_fov) / height) - (vertical_fov / 2.0)
           base_y = Math.tan(attitude)
 
@@ -43,13 +44,12 @@ class RayTracer
 
             block = blocks.values.first
 
-            if block
-              length = Math.sqrt(ray.x * ray.x + ray.y * ray.y + ray.z * ray.z)
-              brightness = [MAX_DEPTH - length, 0.0].max / MAX_DEPTH
-              colour = ChunkyPNG::Color.rgba((block.r * brightness).to_i, (block.g * brightness).to_i, (block.b * brightness).to_i, 255)
-              image.rect(x, y, x + (resolution - 1), y + (resolution - 1), colour, colour)
-              break
-            end
+            next unless block
+            length = Math.sqrt(ray.x * ray.x + ray.y * ray.y + ray.z * ray.z)
+            brightness = [MAX_DEPTH - length, 0.0].max / MAX_DEPTH
+            colour = ChunkyPNG::Color.rgba((block.r * brightness).to_i, (block.g * brightness).to_i, (block.b * brightness).to_i, 255)
+            image.rect(x, y, x + (resolution - 1), y + (resolution - 1), colour, colour)
+            break
           end
         end
       end
