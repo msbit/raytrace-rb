@@ -1,5 +1,3 @@
-require 'chunky_png'
-
 require File.expand_path("./axis_aligned_bounding_block.rb", __dir__)
 require File.expand_path("./point.rb", __dir__)
 
