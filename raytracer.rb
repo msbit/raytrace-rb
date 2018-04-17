@@ -22,6 +22,11 @@ class RayTracer
   end
 
   def render(width, height, horizontal_fov, vertical_fov, triangles, image, image_name)
+    triangles.sort! do |x, y|
+      a = x.vertex0
+      b = y.vertex0
+      (a.x * a.x + a.y * a.y + a.z * a.z) <=> (b.x * b.x + b.y * b.y + b.z * b.z)
+    end
     save_chunk = width / 32
     (0...width).step(1) do |x|
       azimuth = ((x * horizontal_fov) / width) - (horizontal_fov / 2.0)
