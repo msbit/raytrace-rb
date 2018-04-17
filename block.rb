@@ -29,22 +29,22 @@ class Block
 
     @triangles = []
 
-    @triangles << Triangle.new(vertex0, vertex3, vertex2, r, g, b)
-    @triangles << Triangle.new(vertex0, vertex1, vertex3, r, g, b)
+    @triangles << Triangle.new(vertex0, vertex2, vertex3, r, g, b)
+    @triangles << Triangle.new(vertex0, vertex3, vertex1, r, g, b)
 
-    @triangles << Triangle.new(vertex1, vertex7, vertex3, r, g, b)
-    @triangles << Triangle.new(vertex1, vertex5, vertex7, r, g, b)
+    @triangles << Triangle.new(vertex1, vertex3, vertex7, r, g, b)
+    @triangles << Triangle.new(vertex1, vertex7, vertex5, r, g, b)
 
-    @triangles << Triangle.new(vertex5, vertex6, vertex7, r, g, b)
-    @triangles << Triangle.new(vertex5, vertex4, vertex6, r, g, b)
+    @triangles << Triangle.new(vertex5, vertex7, vertex6, r, g, b)
+    @triangles << Triangle.new(vertex5, vertex6, vertex4, r, g, b)
 
-    @triangles << Triangle.new(vertex4, vertex2, vertex6, r, g, b)
-    @triangles << Triangle.new(vertex4, vertex0, vertex2, r, g, b)
+    @triangles << Triangle.new(vertex4, vertex6, vertex2, r, g, b)
+    @triangles << Triangle.new(vertex4, vertex2, vertex0, r, g, b)
 
-    @triangles << Triangle.new(vertex2, vertex7, vertex6, r, g, b)
-    @triangles << Triangle.new(vertex2, vertex3, vertex7, r, g, b)
+    @triangles << Triangle.new(vertex2, vertex6, vertex7, r, g, b)
+    @triangles << Triangle.new(vertex2, vertex7, vertex3, r, g, b)
 
-    @triangles << Triangle.new(vertex4, vertex1, vertex0, r, g, b)
-    @triangles << Triangle.new(vertex4, vertex5, vertex1, r, g, b)
+    @triangles << Triangle.new(vertex4, vertex0, vertex1, r, g, b)
+    @triangles << Triangle.new(vertex4, vertex1, vertex5, r, g, b)
   end
 end

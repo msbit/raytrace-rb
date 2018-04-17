@@ -43,7 +43,7 @@ class RayTracer
         triangles.each do |triangle|
           pvec = ray.cross_product(triangle.edge2)
           det = triangle.edge1.dot_product(pvec)
-          next if det > -Float::EPSILON
+          next if det < Float::EPSILON
 
           inv_det = 1 / det
           tvec = Point.new(0.0, 0.0, 0.0).minus(triangle.vertex0)
