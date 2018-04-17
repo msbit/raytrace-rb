@@ -45,15 +45,15 @@ class RayTracer
           det = triangle.edge1.dot_product(pvec)
           next if det < Float::EPSILON
 
-          inv_det = 1 / det
           tvec = Point.new(0.0, 0.0, 0.0).minus(triangle.vertex0)
-          u = inv_det * (tvec.dot_product(pvec))
-          next unless u.between?(0.0, 1.0)
+          u = tvec.dot_product(pvec)
+          next if u < 0.0 || u > det
 
           qvec = tvec.cross_product(triangle.edge1)
-          v = inv_det * ray.dot_product(qvec)
-          next if v < 0.0 || u + v > 1.0
+          v = ray.dot_product(qvec)
+          next if v < 0.0 || u + v > det
 
+          inv_det = 1 / det
           t = inv_det * triangle.edge2.dot_product(qvec)
           next if t < Float::EPSILON
 
