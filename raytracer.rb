@@ -21,36 +21,50 @@ class RayTracer
     depths
   end
 
-  def render(width, height, horizontal_fov, vertical_fov, blocks, image, image_name)
-    previous_resolution = nil
-    [32, 16, 8, 4, 2, 1].each do |resolution|
-      (0...width).step(resolution) do |x|
-        azimuth = ((x * horizontal_fov) / width) - (horizontal_fov / 2.0)
-        base_x = Math.tan(azimuth)
-        (0...height).step(resolution).map do |y|
-          next if previous_resolution && (x % previous_resolution).zero? && (y % previous_resolution).zero?
-          attitude = ((y * vertical_fov) / height) - (vertical_fov / 2.0)
-          base_y = Math.tan(attitude)
+  def render(width, height, horizontal_fov, vertical_fov, triangles, image, image_name)
+    save_chunk = width / 32
+    (0...width).step(1) do |x|
+      azimuth = ((x * horizontal_fov) / width) - (horizontal_fov / 2.0)
+      base_x = Math.tan(azimuth)
+      (0...height).step(1).map do |y|
+        attitude = ((y * vertical_fov) / height) - (vertical_fov / 2.0)
+        base_y = Math.tan(attitude)
 
-          @precalced_depths.each do |depth|
-            ray = Point.new(base_x * depth, base_y * depth, depth)
-            ray_origin = Point.new(ray.x - 0.25, ray.y - 0.25, ray.z - 0.25)
-            ray_extent = Point.new(ray.x + 0.25, ray.y + 0.25, ray.z + 0.25)
+        ray = Point.new(base_x, base_y, 1.0)
 
-            blocks.each do |block|
-              length = Math.sqrt(ray.x * ray.x + ray.y * ray.y + ray.z * ray.z)
-              brightness = [MAX_DEPTH - length, 0.0].max / MAX_DEPTH
-              colour = ChunkyPNG::Color.rgba((block.r * brightness).to_i, (block.g * brightness).to_i, (block.b * brightness).to_i, 255)
-              image.rect(x, y, x + (resolution - 1), y + (resolution - 1), colour, colour)
-              break
-            end
+        intersecting_triangle = nil
+        intersecting_distance = 2147483647
+
+        triangles.each do |triangle|
+          pvec = ray.cross_product(triangle.edge2)
+          det = triangle.edge1.dot_product(pvec)
+          next if det > -Float::EPSILON
+
+          inv_det = 1 / det
+          tvec = Point.new(0.0, 0.0, 0.0).minus(triangle.vertex0)
+          u = inv_det * (tvec.dot_product(pvec))
+          next unless u.between?(0.0, 1.0)
+
+          qvec = tvec.cross_product(triangle.edge1)
+          v = inv_det * ray.dot_product(qvec)
+          next if v < 0.0 || u + v > 1.0
+
+          t = inv_det * triangle.edge2.dot_product(qvec)
+          next if t < Float::EPSILON
+
+          if t < intersecting_distance
+            intersecting_triangle = triangle
+            intersecting_distance = t
           end
         end
+        unless intersecting_triangle.nil?
+          brightness = [MAX_DEPTH - intersecting_distance, 0.0].max / MAX_DEPTH
+          colour = ChunkyPNG::Color.rgba((intersecting_triangle.r * brightness).to_i, (intersecting_triangle.g * brightness).to_i, (intersecting_triangle.b * brightness).to_i, 255)
+          image[x, y] = colour
+        end
       end
-
-      previous_resolution = resolution
-
-      image.save("#{image_name}.png", interlace: true)
+      image.save("#{image_name}.png", interlace: true) if x % save_chunk == 0
     end
+    image.save("#{image_name}.png", interlace: true)
   end
 end
