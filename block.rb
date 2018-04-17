@@ -1,13 +1,13 @@
 require 'securerandom'
 
-require File.expand_path('./axis_aligned_bounding_block.rb', __dir__)
-
-class Block < AxisAlignedBoundingBlock
+class Block
   attr_accessor :r, :g, :b
   attr_accessor :id
+  attr_accessor :origin, :extent
 
   def initialize(origin, extent, r, g, b)
-    super(origin, extent)
+    @origin = origin
+    @extent = extent
 
     @r = r
     @g = g

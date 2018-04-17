@@ -1,4 +1,3 @@
-require File.expand_path('./axis_aligned_bounding_block.rb', __dir__)
 require File.expand_path('./point.rb', __dir__)
 
 class RayTracer
@@ -22,7 +21,7 @@ class RayTracer
     depths
   end
 
-  def render(width, height, horizontal_fov, vertical_fov, octree, image, image_name)
+  def render(width, height, horizontal_fov, vertical_fov, blocks, image, image_name)
     previous_resolution = nil
     [32, 16, 8, 4, 2, 1].each do |resolution|
       (0...width).step(resolution) do |x|
@@ -38,18 +37,13 @@ class RayTracer
             ray_origin = Point.new(ray.x - 0.25, ray.y - 0.25, ray.z - 0.25)
             ray_extent = Point.new(ray.x + 0.25, ray.y + 0.25, ray.z + 0.25)
 
-            blocks = {}
-            aabb = AxisAlignedBoundingBlock.new(ray_origin, ray_extent)
-            octree.query_range(aabb, blocks)
-
-            block = blocks.values.first
-
-            next unless block
-            length = Math.sqrt(ray.x * ray.x + ray.y * ray.y + ray.z * ray.z)
-            brightness = [MAX_DEPTH - length, 0.0].max / MAX_DEPTH
-            colour = ChunkyPNG::Color.rgba((block.r * brightness).to_i, (block.g * brightness).to_i, (block.b * brightness).to_i, 255)
-            image.rect(x, y, x + (resolution - 1), y + (resolution - 1), colour, colour)
-            break
+            blocks.each do |block|
+              length = Math.sqrt(ray.x * ray.x + ray.y * ray.y + ray.z * ray.z)
+              brightness = [MAX_DEPTH - length, 0.0].max / MAX_DEPTH
+              colour = ChunkyPNG::Color.rgba((block.r * brightness).to_i, (block.g * brightness).to_i, (block.b * brightness).to_i, 255)
+              image.rect(x, y, x + (resolution - 1), y + (resolution - 1), colour, colour)
+              break
+            end
           end
         end
       end

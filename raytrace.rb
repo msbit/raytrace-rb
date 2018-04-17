@@ -4,9 +4,7 @@ require 'bundler'
 
 Bundler.require
 
-require File.expand_path('./axis_aligned_bounding_block.rb', __dir__)
 require File.expand_path('./block.rb', __dir__)
-require File.expand_path('./octree.rb', __dir__)
 require File.expand_path('./point.rb', __dir__)
 require File.expand_path('./raytracer.rb', __dir__)
 
@@ -41,15 +39,7 @@ random = if !ARGV.empty?
 
 blocks = generate_blocks(30, random, scene_origin, scene_extent)
 
-scene_boundary = AxisAlignedBoundingBlock.new(scene_origin, scene_extent)
-
-octree = Octree.new(scene_boundary)
-
-blocks.each do |block|
-  octree.insert(block)
-end
-
 image = ChunkyPNG::Image.new(WIDTH, HEIGHT, ChunkyPNG::Color::BLACK)
 
 raytracer = RayTracer.new(0.25, 0.25, 0.0, MAX_DEPTH)
-raytracer.render(WIDTH, HEIGHT, HORIZONTAL_FOV, VERTICAL_FOV, octree, image, random.seed)
+raytracer.render(WIDTH, HEIGHT, HORIZONTAL_FOV, VERTICAL_FOV, blocks, image, random.seed)
