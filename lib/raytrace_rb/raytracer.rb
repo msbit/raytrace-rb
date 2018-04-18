@@ -21,7 +21,7 @@ module RaytraceRb
       end
       depths
     end
-  
+
     def render(width, height, horizontal_fov, vertical_fov, triangles, image, image_name)
       triangles.sort! do |x, y|
         a = x.vertex0
@@ -42,23 +42,8 @@ module RaytraceRb
           intersecting_distance = 2147483647
   
           triangles.each do |triangle|
-            pvec = ray.cross_product(triangle.edge2)
-            det = triangle.edge1.dot_product(pvec)
-            next if det < Float::EPSILON
-  
-            tvec = Point.new(0.0, 0.0, 0.0).minus(triangle.vertex0)
-            u = tvec.dot_product(pvec)
-            next if u < 0.0 || u > det
-  
-            qvec = tvec.cross_product(triangle.edge1)
-            v = ray.dot_product(qvec)
-            next if v < 0.0 || u + v > det
-  
-            inv_det = 1 / det
-            t = inv_det * triangle.edge2.dot_product(qvec)
-            next if t < Float::EPSILON
-  
-            if t < intersecting_distance
+            t = ray_intersect_triangle(Point.new(0.0, 0.0, 0.0), ray, triangle)
+            unless t.nil? || t > intersecting_distance
               intersecting_triangle = triangle
               intersecting_distance = t
             end
