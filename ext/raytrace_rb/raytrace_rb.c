@@ -2,6 +2,29 @@
 
 #include <float.h>
 #include <math.h>
+#include <pthread.h>
+
+struct Point {
+  double x;
+  double y;
+  double z;
+};
+
+struct Triangle {
+  double r;
+  double g;
+  double b;
+  struct Point edge1;
+  struct Point edge2;
+  struct Point vertex0;
+};
+
+struct ThreadArgument {
+  int trianglesSize;
+  struct Point origin;
+  struct Point ray;
+  struct Triangle *triangles;
+};
 
 VALUE moduleChunkyPng = Qnil;
 VALUE moduleColor = Qnil;
@@ -17,7 +40,9 @@ VALUE methMinus(VALUE, VALUE);
 VALUE methNormalise(VALUE);
 VALUE methRender(VALUE, VALUE, VALUE, VALUE, VALUE, VALUE, VALUE, VALUE);
 
-double methRayIntersectTriangle(VALUE, VALUE, VALUE);
+struct Point crossProduct(struct Point, struct Point);
+
+double rayIntersectTriangle(struct Point, struct Point, struct Triangle);
 
 void Init_raytrace_rb() {
   moduleChunkyPng = rb_define_module("ChunkyPNG");
@@ -44,6 +69,25 @@ VALUE initPoint(double x, double y, double z) {
   return point;
 }
 
+struct Point pointFromValue(VALUE vPoint) {
+  struct Point point;
+  point.x = rb_float_value(rb_ivar_get(vPoint, rb_intern("@x")));
+  point.y = rb_float_value(rb_ivar_get(vPoint, rb_intern("@y")));
+  point.z = rb_float_value(rb_ivar_get(vPoint, rb_intern("@z")));
+  return point;
+}
+
+struct Triangle triangleFromValue(VALUE vTriangle) {
+  struct Triangle triangle;
+  triangle.r = NUM2DBL(rb_ivar_get(vTriangle, rb_intern("@r")));
+  triangle.g = NUM2DBL(rb_ivar_get(vTriangle, rb_intern("@g")));
+  triangle.b = NUM2DBL(rb_ivar_get(vTriangle, rb_intern("@b")));
+  triangle.edge1 = pointFromValue(rb_ivar_get(vTriangle, rb_intern("@edge1")));
+  triangle.edge2 = pointFromValue(rb_ivar_get(vTriangle, rb_intern("@edge2")));
+  triangle.vertex0 = pointFromValue(rb_ivar_get(vTriangle, rb_intern("@vertex0")));
+  return triangle;
+}
+
 VALUE methCrossProduct(VALUE vSelf, VALUE vOther) {
   double self_x = rb_float_value(rb_ivar_get(vSelf, rb_intern("@x")));
   double self_y = rb_float_value(rb_ivar_get(vSelf, rb_intern("@y")));
@@ -60,6 +104,16 @@ VALUE methCrossProduct(VALUE vSelf, VALUE vOther) {
   return initPoint(x, y, z);
 }
 
+struct Point crossProduct(struct Point self, struct Point other) {
+  struct Point product;
+
+  product.x = self.y * other.z - self.z * other.y;
+  product.y = self.z * other.x - self.x * other.z;
+  product.z = self.x * other.y - self.y * other.x;
+
+  return product;
+}
+
 VALUE methDotProduct(VALUE vSelf, VALUE vOther) {
   double self_x = rb_float_value(rb_ivar_get(vSelf, rb_intern("@x")));
   double self_y = rb_float_value(rb_ivar_get(vSelf, rb_intern("@y")));
@@ -72,6 +126,10 @@ VALUE methDotProduct(VALUE vSelf, VALUE vOther) {
   double dot_product = self_x * other_x + self_y * other_y + self_z * other_z;
 
   return rb_float_new(dot_product);
+}
+
+double dotProduct(struct Point self, struct Point other) {
+  return self.x * other.x + self.y * other.y + self.z * other.z;
 }
 
 VALUE methMinus(VALUE vSelf, VALUE vOther) {
@@ -90,6 +148,16 @@ VALUE methMinus(VALUE vSelf, VALUE vOther) {
   return initPoint(x, y, z);
 }
 
+struct Point minus(struct Point self, struct Point other) {
+  struct Point result;
+
+  result.x = self.x - other.x;
+  result.y = self.y - other.y;
+  result.z = self.z - other.z;
+
+  return result;
+}
+
 VALUE methNormalise(VALUE vSelf) {
   double x = rb_float_value(rb_ivar_get(vSelf, rb_intern("@x")));
   double y = rb_float_value(rb_ivar_get(vSelf, rb_intern("@y")));
@@ -104,32 +172,30 @@ VALUE methNormalise(VALUE vSelf) {
   return vSelf;
 }
 
-double methRayIntersectTriangle(VALUE vOrigin, VALUE vDirection, VALUE vTriangle) {
-  VALUE edge1 = rb_ivar_get(vTriangle, rb_intern("@edge1"));
-  VALUE edge2 = rb_ivar_get(vTriangle, rb_intern("@edge2"));
-  VALUE vertex0 = rb_ivar_get(vTriangle, rb_intern("@vertex0"));
+
+double rayIntersectTriangle(struct Point origin, struct Point direction, struct Triangle triangle) {
   double epsilon = rb_float_value(rb_const_get(rb_cFloat, rb_intern("EPSILON")));
 
-  VALUE pvec = methCrossProduct(vDirection, edge2);
-  double det = rb_float_value(methDotProduct(edge1, pvec));
+  struct Point pvec = crossProduct(direction, triangle.edge2);
+  double det = dotProduct(triangle.edge1, pvec);
   if (det < epsilon) {
     return DBL_MAX;
   }
 
-  VALUE tvec = methMinus(vOrigin, vertex0);
-  double u = rb_float_value(methDotProduct(tvec, pvec));
+  struct Point tvec = minus(origin, triangle.vertex0);
+  double u = dotProduct(tvec, pvec);
   if (u < 0.0 || u > det) {
     return DBL_MAX;
   }
 
-  VALUE qvec = methCrossProduct(tvec, edge1);
-  double v = rb_float_value(methDotProduct(vDirection, qvec));
+  struct Point qvec = crossProduct(tvec, triangle.edge1);
+  double v = dotProduct(direction, qvec);
   if (v < 0.0 || (u + v) > det) {
     return DBL_MAX;
   }
 
   double inv_det = 1.0 / det;
-  double t = inv_det * rb_float_value(methDotProduct(edge2, qvec));
+  double t = inv_det * dotProduct(triangle.edge2, qvec);
   if (t < epsilon) {
     return DBL_MAX;
   }
@@ -137,12 +203,47 @@ double methRayIntersectTriangle(VALUE vOrigin, VALUE vDirection, VALUE vTriangle
   return t;
 }
 
+void *performWork(void *argument) {
+  struct ThreadArgument value = *((struct ThreadArgument *) argument);
+  struct Triangle nearestTriangle;
+  int *colour = malloc(sizeof(int));
+  *colour = 255;
+
+  double nearestDistance = DBL_MAX;
+  for (int triangleIndex = 0; triangleIndex < value.trianglesSize; triangleIndex++) {
+    struct Triangle triangle = value.triangles[triangleIndex];
+    double t = rayIntersectTriangle(value.origin, value.ray, triangle);
+    if (t < nearestDistance) {
+      nearestDistance = t;
+      nearestTriangle = triangle;
+    }
+  }
+  if (nearestDistance < DBL_MAX) {
+    double brightness = 200.0 - nearestDistance;
+    if (brightness < 0.0) {
+      brightness = 0.0;
+    }
+    brightness /= 200.0;
+    *colour = ((int8_t)(nearestTriangle.r * brightness) << 24) |
+              ((int8_t)(nearestTriangle.g * brightness) << 16) |
+              ((int8_t)(nearestTriangle.b * brightness) << 8) |
+              255;
+  }
+  pthread_exit(colour);
+}
+
 VALUE methRender(VALUE vSelf, VALUE vWidth, VALUE vHeight, VALUE vHorizontalFov, VALUE vVerticalFov, VALUE vTriangles, VALUE vImage, VALUE vImageName) {
   int width = NUM2INT(vWidth);
   int height = NUM2INT(vHeight);
+  int trianglesSize = NUM2INT(rb_funcall(vTriangles, rb_intern("size"), 0));
   double horizontalFov = rb_float_value(vHorizontalFov);
   double verticalFov = rb_float_value(vVerticalFov);
-  VALUE origin = initPoint(0.0, 0.0, 0.0);
+  struct Point origin = {0.0, 0.0, 0.0};
+  struct Triangle triangles[trianglesSize];
+
+  for (int i = 0; i < trianglesSize; i++) {
+    triangles[i] = triangleFromValue(rb_ary_entry(vTriangles, i));
+  }
 
   char imageName[256];
   snprintf(imageName, 256, "%d.png", NUM2INT(vImageName));
@@ -151,39 +252,25 @@ VALUE methRender(VALUE vSelf, VALUE vWidth, VALUE vHeight, VALUE vHorizontalFov,
   for (int x = 0; x < width; x++) {
     double azimuth = (((double) x * horizontalFov) / (double) width) - (horizontalFov / 2.0);
     double baseX = tan(azimuth);
+
+    pthread_t threads[height];
+    struct ThreadArgument threadArgs[height];
+
     for (int y = 0; y < height; y++) {
       double attitude = (((double) y * verticalFov) / (double) height) - (verticalFov / 2.0);
       double baseY = tan(attitude);
 
-      VALUE ray = initPoint(baseX, baseY, 1.0);
-      VALUE intersectingTriangle = Qnil;
-
-      double intersectingDistance = DBL_MAX;
-      VALUE vTrianglesSize = rb_funcall(vTriangles, rb_intern("size"), 0);
-      int triangleCount = NUM2INT(vTrianglesSize);
-      for (int triangleIndex = 0; triangleIndex < triangleCount; triangleIndex++) {
-        VALUE triangle = rb_ary_entry(vTriangles, triangleIndex);
-        double t = methRayIntersectTriangle(origin, ray, triangle);
-        if (t != Qnil && t < intersectingDistance) {
-          intersectingDistance = t;
-          intersectingTriangle = triangle;
-        }
-      }
-      if (intersectingTriangle != Qnil) {
-        double brightness = 200.0 - intersectingDistance;
-        if (brightness < 0.0) {
-          brightness = 0.0;
-        }
-        brightness /= 200.0;
-        double red = NUM2DBL(rb_ivar_get(intersectingTriangle, rb_intern("@r")));
-        double green = NUM2DBL(rb_ivar_get(intersectingTriangle, rb_intern("@g")));
-        double blue = NUM2DBL(rb_ivar_get(intersectingTriangle, rb_intern("@b")));
-        VALUE vRed = INT2FIX((int8_t)(red * brightness));
-        VALUE vGreen = INT2FIX((int8_t)(green * brightness));
-        VALUE vBlue = INT2FIX((int8_t)(blue * brightness));
-        VALUE colour = rb_funcall(moduleColor, rb_intern("rgba"), 4, vRed, vGreen, vBlue, INT2FIX(255));
-        rb_funcall(vImage, rb_intern("[]="), 3, INT2FIX(x), INT2FIX(y), colour);
-      }
+      threadArgs[y].origin = origin;
+      threadArgs[y].ray = (struct Point){baseX, baseY, 1.0};
+      threadArgs[y].triangles = triangles;
+      threadArgs[y].trianglesSize = trianglesSize;
+      pthread_create(&threads[y], NULL, performWork, &threadArgs[y]);
+    }
+    for (int y = 0; y < height; y++) {
+      int* colour;
+      pthread_join(threads[y], (void**)&colour);
+      rb_funcall(vImage, rb_intern("[]="), 3, INT2FIX(x), INT2FIX(y), INT2NUM(*colour));
+      free(colour);
     }
     if (x % saveChunk == 0) {
       rb_funcall(vImage, rb_intern("save"), 1, rb_str_new2(imageName));
