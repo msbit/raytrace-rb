@@ -1,3 +1,4 @@
+*.bundle
 *.png
 .DS_Store
 .byebug_history
