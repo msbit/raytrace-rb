@@ -232,7 +232,7 @@ void *performWork(void *argument) {
   pthread_exit(colour);
 }
 
-VALUE methRender(VALUE vSelf, VALUE vWidth, VALUE vHeight, VALUE vHorizontalFov, VALUE vVerticalFov, VALUE vTriangles, VALUE vImage, VALUE vImageName) {
+VALUE methRender(VALUE vSelf, VALUE vWidth, VALUE vHeight, VALUE vHorizontalFov, VALUE vVerticalFov, VALUE vTriangles, VALUE vImage, VALUE vRandomSeed) {
   int width = NUM2INT(vWidth);
   int height = NUM2INT(vHeight);
   int trianglesSize = NUM2INT(rb_funcall(vTriangles, rb_intern("size"), 0));
@@ -245,8 +245,11 @@ VALUE methRender(VALUE vSelf, VALUE vWidth, VALUE vHeight, VALUE vHorizontalFov,
     triangles[i] = triangleFromValue(rb_ary_entry(vTriangles, i));
   }
 
+  VALUE vRandomSeedString = rb_big2str(vRandomSeed, 10);
+  char *randomSeed = StringValueCStr(vRandomSeedString);
+
   char imageName[256];
-  snprintf(imageName, 256, "%d.png", NUM2INT(vImageName));
+  snprintf(imageName, 256, "%s.png", randomSeed);
 
   int saveChunk = NUM2INT(vWidth) / 32;
   for (int x = 0; x < width; x++) {
