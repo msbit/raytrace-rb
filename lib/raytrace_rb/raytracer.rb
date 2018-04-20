@@ -21,57 +21,5 @@ module RaytraceRb
       end
       depths
     end
-  
-    def render(width, height, horizontal_fov, vertical_fov, triangles, image, image_name)
-      triangles.sort! do |x, y|
-        a = x.vertex0
-        b = y.vertex0
-        (a.x * a.x + a.y * a.y + a.z * a.z) <=> (b.x * b.x + b.y * b.y + b.z * b.z)
-      end
-      save_chunk = width / 32
-      (0...width).step(1) do |x|
-        azimuth = ((x * horizontal_fov) / width) - (horizontal_fov / 2.0)
-        base_x = Math.tan(azimuth)
-        (0...height).step(1).map do |y|
-          attitude = ((y * vertical_fov) / height) - (vertical_fov / 2.0)
-          base_y = Math.tan(attitude)
-  
-          ray = Point.new(base_x, base_y, 1.0)
-  
-          intersecting_triangle = nil
-          intersecting_distance = 2147483647
-  
-          triangles.each do |triangle|
-            pvec = ray.cross_product(triangle.edge2)
-            det = triangle.edge1.dot_product(pvec)
-            next if det < Float::EPSILON
-  
-            tvec = Point.new(0.0, 0.0, 0.0).minus(triangle.vertex0)
-            u = tvec.dot_product(pvec)
-            next if u < 0.0 || u > det
-  
-            qvec = tvec.cross_product(triangle.edge1)
-            v = ray.dot_product(qvec)
-            next if v < 0.0 || u + v > det
-  
-            inv_det = 1 / det
-            t = inv_det * triangle.edge2.dot_product(qvec)
-            next if t < Float::EPSILON
-  
-            if t < intersecting_distance
-              intersecting_triangle = triangle
-              intersecting_distance = t
-            end
-          end
-          unless intersecting_triangle.nil?
-            brightness = [MAX_DEPTH - intersecting_distance, 0.0].max / MAX_DEPTH
-            colour = ChunkyPNG::Color.rgba((intersecting_triangle.r * brightness).to_i, (intersecting_triangle.g * brightness).to_i, (intersecting_triangle.b * brightness).to_i, 255)
-            image[x, y] = colour
-          end
-        end
-        image.save("#{image_name}.png", interlace: true) if x % save_chunk == 0
-      end
-      image.save("#{image_name}.png", interlace: true)
-    end
   end
 end

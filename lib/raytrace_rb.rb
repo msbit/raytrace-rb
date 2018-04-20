@@ -1,3 +1,5 @@
+require 'raytrace_rb.bundle'
+
 require 'raytrace_rb/block.rb'
 require 'raytrace_rb/point.rb'
 require 'raytrace_rb/raytracer.rb'
