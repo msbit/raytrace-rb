@@ -19,6 +19,7 @@ VALUE rb_mColor = Qnil;
 VALUE rb_mRaytraceRb = Qnil;
 VALUE rb_cPoint = Qnil;
 VALUE rb_cRayTracer = Qnil;
+VALUE rb_cTriangle = Qnil;
 
 void Init_raytrace_rb();
 
@@ -42,6 +43,8 @@ void Init_raytrace_rb() {
 
   rb_cRayTracer = rb_define_class_under(rb_mRaytraceRb, "RayTracer", rb_cObject);
   rb_define_method(rb_cRayTracer, "render", methRender, 7);
+
+  rb_cTriangle = rb_define_class_under(rb_mRaytraceRb, "Triangle", rb_cObject);
 
   rb_mColor = rb_define_module_under(rb_mChunkyPng, "Color");
 }
