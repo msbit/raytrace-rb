@@ -4,20 +4,8 @@
 #include <math.h>
 #include <pthread.h>
 
-struct Point {
-  double x;
-  double y;
-  double z;
-};
-
-struct Triangle {
-  double r;
-  double g;
-  double b;
-  struct Point edge1;
-  struct Point edge2;
-  struct Point vertex0;
-};
+#include "point.h"
+#include "triangle.h"
 
 struct ThreadArgument {
   int trianglesSize;
@@ -26,11 +14,11 @@ struct ThreadArgument {
   struct Triangle *triangles;
 };
 
-VALUE moduleChunkyPng = Qnil;
-VALUE moduleColor = Qnil;
-VALUE moduleRaytraceRb = Qnil;
-VALUE classPoint = Qnil;
-VALUE classRayTracer = Qnil;
+VALUE rb_mChunkyPng = Qnil;
+VALUE rb_mColor = Qnil;
+VALUE rb_mRaytraceRb = Qnil;
+VALUE rb_cPoint = Qnil;
+VALUE rb_cRayTracer = Qnil;
 
 void Init_raytrace_rb();
 
@@ -40,122 +28,49 @@ VALUE methMinus(VALUE, VALUE);
 VALUE methNormalise(VALUE);
 VALUE methRender(VALUE, VALUE, VALUE, VALUE, VALUE, VALUE, VALUE, VALUE);
 
-struct Point crossProduct(struct Point, struct Point);
-
 double rayIntersectTriangle(struct Point, struct Point, struct Triangle);
 
 void Init_raytrace_rb() {
-  moduleChunkyPng = rb_define_module("ChunkyPNG");
-  moduleRaytraceRb = rb_define_module("RaytraceRb");
+  rb_mChunkyPng = rb_define_module("ChunkyPNG");
+  rb_mRaytraceRb = rb_define_module("RaytraceRb");
 
-  classPoint = rb_define_class_under(moduleRaytraceRb, "Point", rb_cObject);
-  rb_define_method(classPoint, "cross_product", methCrossProduct, 1);
-  rb_define_method(classPoint, "dot_product", methDotProduct, 1);
-  rb_define_method(classPoint, "minus", methMinus, 1);
-  rb_define_method(classPoint, "normalise!", methNormalise, 0);
+  rb_cPoint = rb_define_class_under(rb_mRaytraceRb, "Point", rb_cObject);
+  rb_define_method(rb_cPoint, "cross_product", methCrossProduct, 1);
+  rb_define_method(rb_cPoint, "dot_product", methDotProduct, 1);
+  rb_define_method(rb_cPoint, "minus", methMinus, 1);
+  rb_define_method(rb_cPoint, "normalise!", methNormalise, 0);
 
-  classRayTracer = rb_define_class_under(moduleRaytraceRb, "RayTracer", rb_cObject);
-  rb_define_method(classRayTracer, "render", methRender, 7);
+  rb_cRayTracer = rb_define_class_under(rb_mRaytraceRb, "RayTracer", rb_cObject);
+  rb_define_method(rb_cRayTracer, "render", methRender, 7);
 
-  moduleColor = rb_define_module_under(moduleChunkyPng, "Color");
-}
-
-VALUE initPoint(double x, double y, double z) {
-  VALUE args[3] = {rb_float_new(x), rb_float_new(y), rb_float_new(z)};
-
-  VALUE point = rb_obj_alloc(classPoint);
-  rb_obj_call_init(point, 3, args);
-
-  return point;
-}
-
-struct Point pointFromValue(VALUE vPoint) {
-  struct Point point;
-  point.x = rb_float_value(rb_ivar_get(vPoint, rb_intern("@x")));
-  point.y = rb_float_value(rb_ivar_get(vPoint, rb_intern("@y")));
-  point.z = rb_float_value(rb_ivar_get(vPoint, rb_intern("@z")));
-  return point;
-}
-
-struct Triangle triangleFromValue(VALUE vTriangle) {
-  struct Triangle triangle;
-  triangle.r = NUM2DBL(rb_ivar_get(vTriangle, rb_intern("@r")));
-  triangle.g = NUM2DBL(rb_ivar_get(vTriangle, rb_intern("@g")));
-  triangle.b = NUM2DBL(rb_ivar_get(vTriangle, rb_intern("@b")));
-  triangle.edge1 = pointFromValue(rb_ivar_get(vTriangle, rb_intern("@edge1")));
-  triangle.edge2 = pointFromValue(rb_ivar_get(vTriangle, rb_intern("@edge2")));
-  triangle.vertex0 = pointFromValue(rb_ivar_get(vTriangle, rb_intern("@vertex0")));
-  return triangle;
+  rb_mColor = rb_define_module_under(rb_mChunkyPng, "Color");
 }
 
 VALUE methCrossProduct(VALUE vSelf, VALUE vOther) {
-  double self_x = rb_float_value(rb_ivar_get(vSelf, rb_intern("@x")));
-  double self_y = rb_float_value(rb_ivar_get(vSelf, rb_intern("@y")));
-  double self_z = rb_float_value(rb_ivar_get(vSelf, rb_intern("@z")));
+  struct Point self = pointFromValue(vSelf);
+  struct Point other = pointFromValue(vOther);
 
-  double other_x = rb_float_value(rb_ivar_get(vOther, rb_intern("@x")));
-  double other_y = rb_float_value(rb_ivar_get(vOther, rb_intern("@y")));
-  double other_z = rb_float_value(rb_ivar_get(vOther, rb_intern("@z")));
+  struct Point result = crossProduct(self, other);
 
-  double x = self_y * other_z - self_z * other_y;
-  double y = self_z * other_x - self_x * other_z;
-  double z = self_x * other_y - self_y * other_x;
-
-  return initPoint(x, y, z);
-}
-
-struct Point crossProduct(struct Point self, struct Point other) {
-  struct Point product;
-
-  product.x = self.y * other.z - self.z * other.y;
-  product.y = self.z * other.x - self.x * other.z;
-  product.z = self.x * other.y - self.y * other.x;
-
-  return product;
+  return valueFromPoint(result);
 }
 
 VALUE methDotProduct(VALUE vSelf, VALUE vOther) {
-  double self_x = rb_float_value(rb_ivar_get(vSelf, rb_intern("@x")));
-  double self_y = rb_float_value(rb_ivar_get(vSelf, rb_intern("@y")));
-  double self_z = rb_float_value(rb_ivar_get(vSelf, rb_intern("@z")));
+  struct Point self = pointFromValue(vSelf);
+  struct Point other = pointFromValue(vOther);
 
-  double other_x = rb_float_value(rb_ivar_get(vOther, rb_intern("@x")));
-  double other_y = rb_float_value(rb_ivar_get(vOther, rb_intern("@y")));
-  double other_z = rb_float_value(rb_ivar_get(vOther, rb_intern("@z")));
+  double result = dotProduct(self, other);
 
-  double dot_product = self_x * other_x + self_y * other_y + self_z * other_z;
-
-  return rb_float_new(dot_product);
-}
-
-double dotProduct(struct Point self, struct Point other) {
-  return self.x * other.x + self.y * other.y + self.z * other.z;
+  return rb_float_new(result);
 }
 
 VALUE methMinus(VALUE vSelf, VALUE vOther) {
-  double self_x = rb_float_value(rb_ivar_get(vSelf, rb_intern("@x")));
-  double self_y = rb_float_value(rb_ivar_get(vSelf, rb_intern("@y")));
-  double self_z = rb_float_value(rb_ivar_get(vSelf, rb_intern("@z")));
+  struct Point self = pointFromValue(vSelf);
+  struct Point other = pointFromValue(vOther);
 
-  double other_x = rb_float_value(rb_ivar_get(vOther, rb_intern("@x")));
-  double other_y = rb_float_value(rb_ivar_get(vOther, rb_intern("@y")));
-  double other_z = rb_float_value(rb_ivar_get(vOther, rb_intern("@z")));
+  struct Point result = minus(self, other);
 
-  double x = self_x - other_x;
-  double y = self_y - other_y;
-  double z = self_z - other_z;
-
-  return initPoint(x, y, z);
-}
-
-struct Point minus(struct Point self, struct Point other) {
-  struct Point result;
-
-  result.x = self.x - other.x;
-  result.y = self.y - other.y;
-  result.z = self.z - other.z;
-
-  return result;
+  return valueFromPoint(result);
 }
 
 VALUE methNormalise(VALUE vSelf) {
