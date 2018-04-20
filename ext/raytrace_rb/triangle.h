@@ -16,7 +16,9 @@ struct Triangle {
   struct Point vertex2;
 };
 
-struct Triangle triangleFromValue(VALUE);
-VALUE valueFromTriangle(struct Triangle);
+void initRb_cTriangle(VALUE);
+
+struct Triangle triangleFromRb_cTriangle(VALUE);
+VALUE rb_cTriangleFromTriangle(struct Triangle);
 
 #endif
