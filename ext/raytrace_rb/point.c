@@ -4,11 +4,11 @@
 
 extern VALUE rb_cPoint;
 
-struct Point pointFromValue(VALUE vPoint) {
+struct Point pointFromValue(VALUE rb_iPoint) {
   struct Point point;
-  point.x = rb_float_value(rb_ivar_get(vPoint, rb_intern("@x")));
-  point.y = rb_float_value(rb_ivar_get(vPoint, rb_intern("@y")));
-  point.z = rb_float_value(rb_ivar_get(vPoint, rb_intern("@z")));
+  point.x = rb_float_value(rb_ivar_get(rb_iPoint, rb_intern("@x")));
+  point.y = rb_float_value(rb_ivar_get(rb_iPoint, rb_intern("@y")));
+  point.z = rb_float_value(rb_ivar_get(rb_iPoint, rb_intern("@z")));
   return point;
 }
 

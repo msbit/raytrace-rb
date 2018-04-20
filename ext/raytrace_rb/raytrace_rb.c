@@ -46,45 +46,45 @@ void Init_raytrace_rb() {
   rb_mColor = rb_define_module_under(rb_mChunkyPng, "Color");
 }
 
-VALUE methCrossProduct(VALUE vSelf, VALUE vOther) {
-  struct Point self = pointFromValue(vSelf);
-  struct Point other = pointFromValue(vOther);
+VALUE methCrossProduct(VALUE rb_iSelf, VALUE rb_iOther) {
+  struct Point self = pointFromValue(rb_iSelf);
+  struct Point other = pointFromValue(rb_iOther);
 
   struct Point result = crossProduct(self, other);
 
   return valueFromPoint(result);
 }
 
-VALUE methDotProduct(VALUE vSelf, VALUE vOther) {
-  struct Point self = pointFromValue(vSelf);
-  struct Point other = pointFromValue(vOther);
+VALUE methDotProduct(VALUE rb_iSelf, VALUE rb_iOther) {
+  struct Point self = pointFromValue(rb_iSelf);
+  struct Point other = pointFromValue(rb_iOther);
 
   double result = dotProduct(self, other);
 
   return rb_float_new(result);
 }
 
-VALUE methMinus(VALUE vSelf, VALUE vOther) {
-  struct Point self = pointFromValue(vSelf);
-  struct Point other = pointFromValue(vOther);
+VALUE methMinus(VALUE rb_iSelf, VALUE rb_iOther) {
+  struct Point self = pointFromValue(rb_iSelf);
+  struct Point other = pointFromValue(rb_iOther);
 
   struct Point result = minus(self, other);
 
   return valueFromPoint(result);
 }
 
-VALUE methNormalise(VALUE vSelf) {
-  double x = rb_float_value(rb_ivar_get(vSelf, rb_intern("@x")));
-  double y = rb_float_value(rb_ivar_get(vSelf, rb_intern("@y")));
-  double z = rb_float_value(rb_ivar_get(vSelf, rb_intern("@z")));
+VALUE methNormalise(VALUE rb_iSelf) {
+  double x = rb_float_value(rb_ivar_get(rb_iSelf, rb_intern("@x")));
+  double y = rb_float_value(rb_ivar_get(rb_iSelf, rb_intern("@y")));
+  double z = rb_float_value(rb_ivar_get(rb_iSelf, rb_intern("@z")));
 
   double length = sqrt(x * x + y * y + z * z);
 
-  rb_ivar_set(vSelf, rb_intern("@x"), rb_float_new(x / length));
-  rb_ivar_set(vSelf, rb_intern("@y"), rb_float_new(y / length));
-  rb_ivar_set(vSelf, rb_intern("@z"), rb_float_new(z / length));
+  rb_ivar_set(rb_iSelf, rb_intern("@x"), rb_float_new(x / length));
+  rb_ivar_set(rb_iSelf, rb_intern("@y"), rb_float_new(y / length));
+  rb_ivar_set(rb_iSelf, rb_intern("@z"), rb_float_new(z / length));
 
-  return vSelf;
+  return rb_iSelf;
 }
 
 
@@ -147,26 +147,26 @@ void *performWork(void *argument) {
   pthread_exit(colour);
 }
 
-VALUE methRender(VALUE vSelf, VALUE vWidth, VALUE vHeight, VALUE vHorizontalFov, VALUE vVerticalFov, VALUE vTriangles, VALUE vImage, VALUE vRandomSeed) {
-  int width = NUM2INT(vWidth);
-  int height = NUM2INT(vHeight);
-  int trianglesSize = NUM2INT(rb_funcall(vTriangles, rb_intern("size"), 0));
-  double horizontalFov = rb_float_value(vHorizontalFov);
-  double verticalFov = rb_float_value(vVerticalFov);
+VALUE methRender(VALUE rb_iSelf, VALUE rb_iWidth, VALUE rb_iHeight, VALUE rb_iHorizontalFov, VALUE rb_iVerticalFov, VALUE rb_iTriangles, VALUE rb_iImage, VALUE rb_iRandomSeed) {
+  int width = NUM2INT(rb_iWidth);
+  int height = NUM2INT(rb_iHeight);
+  int trianglesSize = NUM2INT(rb_funcall(rb_iTriangles, rb_intern("size"), 0));
+  double horizontalFov = rb_float_value(rb_iHorizontalFov);
+  double verticalFov = rb_float_value(rb_iVerticalFov);
   struct Point origin = {0.0, 0.0, 0.0};
   struct Triangle triangles[trianglesSize];
 
   for (int i = 0; i < trianglesSize; i++) {
-    triangles[i] = triangleFromValue(rb_ary_entry(vTriangles, i));
+    triangles[i] = triangleFromValue(rb_ary_entry(rb_iTriangles, i));
   }
 
-  VALUE vRandomSeedString = rb_big2str(vRandomSeed, 10);
-  char *randomSeed = StringValueCStr(vRandomSeedString);
+  VALUE rb_iRandomSeedString = rb_big2str(rb_iRandomSeed, 10);
+  char *randomSeed = StringValueCStr(rb_iRandomSeedString);
 
   char imageName[256];
   snprintf(imageName, 256, "%s.png", randomSeed);
 
-  int saveChunk = NUM2INT(vWidth) / 32;
+  int saveChunk = NUM2INT(rb_iWidth) / 32;
   for (int x = 0; x < width; x++) {
     double azimuth = (((double) x * horizontalFov) / (double) width) - (horizontalFov / 2.0);
     double baseX = tan(azimuth);
@@ -187,13 +187,13 @@ VALUE methRender(VALUE vSelf, VALUE vWidth, VALUE vHeight, VALUE vHorizontalFov,
     for (int y = 0; y < height; y++) {
       int* colour;
       pthread_join(threads[y], (void**)&colour);
-      rb_funcall(vImage, rb_intern("[]="), 3, INT2FIX(x), INT2FIX(y), INT2NUM(*colour));
+      rb_funcall(rb_iImage, rb_intern("[]="), 3, INT2FIX(x), INT2FIX(y), INT2NUM(*colour));
       free(colour);
     }
     if (x % saveChunk == 0) {
-      rb_funcall(vImage, rb_intern("save"), 1, rb_str_new2(imageName));
+      rb_funcall(rb_iImage, rb_intern("save"), 1, rb_str_new2(imageName));
     }
   }
-  rb_funcall(vImage, rb_intern("save"), 1, rb_str_new2(imageName));
+  rb_funcall(rb_iImage, rb_intern("save"), 1, rb_str_new2(imageName));
   return Qnil;
 }
