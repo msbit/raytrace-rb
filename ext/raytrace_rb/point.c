@@ -6,7 +6,7 @@ VALUE rb_cPoint;
 VALUE rb_mChunkyPng;
 VALUE rb_mColor;
 
-void initRb_cPoint(VALUE under) {
+void initRb_cPoint(const VALUE under) {
   rb_cPoint = rb_define_class_under(under, "Point", rb_cObject);
   rb_define_method(rb_cPoint, "cross_product", methCrossProduct, 1);
   rb_define_method(rb_cPoint, "dot_product", methDotProduct, 1);
@@ -17,7 +17,7 @@ void initRb_cPoint(VALUE under) {
   rb_mColor = rb_define_module_under(rb_mChunkyPng, "Color");
 }
 
-VALUE methCrossProduct(VALUE rb_iSelf, VALUE rb_iOther) {
+VALUE methCrossProduct(const VALUE rb_iSelf, const VALUE rb_iOther) {
   struct Point self = pointFromRb_cPoint(rb_iSelf);
   struct Point other = pointFromRb_cPoint(rb_iOther);
 
@@ -26,7 +26,7 @@ VALUE methCrossProduct(VALUE rb_iSelf, VALUE rb_iOther) {
   return rb_cPointFromPoint(result);
 }
 
-VALUE methDotProduct(VALUE rb_iSelf, VALUE rb_iOther) {
+VALUE methDotProduct(const VALUE rb_iSelf, const VALUE rb_iOther) {
   struct Point self = pointFromRb_cPoint(rb_iSelf);
   struct Point other = pointFromRb_cPoint(rb_iOther);
 
@@ -35,7 +35,7 @@ VALUE methDotProduct(VALUE rb_iSelf, VALUE rb_iOther) {
   return rb_float_new(result);
 }
 
-VALUE methMinus(VALUE rb_iSelf, VALUE rb_iOther) {
+VALUE methMinus(const VALUE rb_iSelf, const VALUE rb_iOther) {
   struct Point self = pointFromRb_cPoint(rb_iSelf);
   struct Point other = pointFromRb_cPoint(rb_iOther);
 
@@ -58,7 +58,7 @@ VALUE methNormalise(VALUE rb_iSelf) {
   return rb_iSelf;
 }
 
-struct Point pointFromRb_cPoint(VALUE rb_iPoint) {
+struct Point pointFromRb_cPoint(const VALUE rb_iPoint) {
   struct Point point;
   point.x = rb_float_value(rb_ivar_get(rb_iPoint, rb_intern("@x")));
   point.y = rb_float_value(rb_ivar_get(rb_iPoint, rb_intern("@y")));
@@ -66,7 +66,7 @@ struct Point pointFromRb_cPoint(VALUE rb_iPoint) {
   return point;
 }
 
-VALUE rb_cPointFromPoint(struct Point point) {
+VALUE rb_cPointFromPoint(const struct Point point) {
   VALUE args[3] = {rb_float_new(point.x), rb_float_new(point.y), rb_float_new(point.z)};
 
   VALUE rb_iPoint = rb_obj_alloc(rb_cPoint);
@@ -75,13 +75,13 @@ VALUE rb_cPointFromPoint(struct Point point) {
   return rb_iPoint;
 }
 
-VALUE rb_cColorFromPoint(struct Point point) {
+VALUE rb_cColorFromPoint(const struct Point point) {
   return rb_funcall(rb_mColor, rb_intern("rgba"), 4,
                     INT2FIX((uint8_t)point.x), INT2FIX((uint8_t)point.y),
                     INT2FIX((uint8_t)point.z), INT2FIX(255));
 }
 
-struct Point crossProduct(struct Point self, struct Point other) {
+struct Point crossProduct(const struct Point self, const struct Point other) {
   struct Point product;
 
   product.x = self.y * other.z - self.z * other.y;
@@ -91,11 +91,11 @@ struct Point crossProduct(struct Point self, struct Point other) {
   return product;
 }
 
-double dotProduct(struct Point self, struct Point other) {
+double dotProduct(const struct Point self, const struct Point other) {
   return self.x * other.x + self.y * other.y + self.z * other.z;
 }
 
-struct Point minus(struct Point self, struct Point other) {
+struct Point minus(const struct Point self, const struct Point other) {
   struct Point result;
 
   result.x = self.x - other.x;

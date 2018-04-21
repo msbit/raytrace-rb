@@ -5,7 +5,7 @@
 
 VALUE rb_cTriangle;
 
-struct Triangle triangleFromRb_cTriangle(VALUE rb_iTriangle) {
+struct Triangle triangleFromRb_cTriangle(const VALUE rb_iTriangle) {
   struct Triangle triangle;
   triangle.r = NUM2DBL(rb_ivar_get(rb_iTriangle, rb_intern("@r")));
   triangle.g = NUM2DBL(rb_ivar_get(rb_iTriangle, rb_intern("@g")));
@@ -18,11 +18,11 @@ struct Triangle triangleFromRb_cTriangle(VALUE rb_iTriangle) {
   return triangle;
 }
 
-void initRb_cTriangle(VALUE under) {
+void initRb_cTriangle(const VALUE under) {
   rb_cTriangle = rb_define_class_under(under, "Triangle", rb_cObject);
 }
 
-VALUE rb_cTriangleFromTriangle(struct Triangle triangle) {
+VALUE rb_cTriangleFromTriangle(const struct Triangle triangle) {
   VALUE args[6] = {
     rb_cPointFromPoint(triangle.vertex0),
     rb_cPointFromPoint(triangle.vertex1),

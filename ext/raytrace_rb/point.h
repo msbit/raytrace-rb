@@ -9,18 +9,18 @@ struct Point {
   double z;
 };
 
-void initRb_cPoint(VALUE);
+void initRb_cPoint(const VALUE);
 
-VALUE methCrossProduct(VALUE, VALUE);
-VALUE methDotProduct(VALUE, VALUE);
-VALUE methMinus(VALUE, VALUE);
+VALUE methCrossProduct(const VALUE, const VALUE);
+VALUE methDotProduct(const VALUE, const VALUE);
+VALUE methMinus(const VALUE, const VALUE);
 VALUE methNormalise(VALUE);
 
-double dotProduct(struct Point, struct Point);
-struct Point crossProduct(struct Point, struct Point);
-struct Point minus(struct Point, struct Point);
-struct Point pointFromRb_cPoint(VALUE);
-VALUE rb_cColorFromPoint(struct Point);
-VALUE rb_cPointFromPoint(struct Point);
+double dotProduct(const struct Point, const struct Point);
+struct Point crossProduct(const struct Point, const struct Point);
+struct Point minus(const struct Point, const struct Point);
+struct Point pointFromRb_cPoint(const VALUE);
+VALUE rb_cColorFromPoint(const struct Point);
+VALUE rb_cPointFromPoint(const struct Point);
 
 #endif
