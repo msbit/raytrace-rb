@@ -26,9 +26,9 @@ extern VALUE rb_cTriangle;
 void Init_raytrace_rb();
 
 VALUE methRender(VALUE, VALUE, VALUE, VALUE, VALUE, VALUE, VALUE, VALUE);
-bool intersectsTriangle(struct Point, struct Point, struct Triangle, double*);
-struct Point *castRay(struct Point, struct Point, struct Triangle*, int, int);
-bool trace(const struct Point, const struct Point, const struct Triangle*, int, double*, int*);
+bool intersectsTriangle(struct Point, struct Point, struct Triangle, double *);
+struct Point *castRay(struct Point, struct Point, struct Triangle *, int, int);
+bool trace(const struct Point, const struct Point, const struct Triangle *, int, double *, struct Triangle **);
 
 void Init_raytrace_rb() {
   rb_mRaytraceRb = rb_define_module("RaytraceRb");
@@ -59,34 +59,32 @@ struct Point *castRay(struct Point origin, struct Point direction, struct Triang
   }
 
   double nearestDistance = DBL_MAX;
-  int nearestTriangleIndex = -1;
+  struct Triangle *nearestTriangle = NULL;
 
-  if (trace(origin, direction, triangles, trianglesSize, &nearestDistance, &nearestTriangleIndex)) {
-    struct Triangle nearestTriangle = triangles[nearestTriangleIndex];
+  if (trace(origin, direction, triangles, trianglesSize, &nearestDistance, &nearestTriangle)) {
     double brightness = 200.0 - nearestDistance;
     if (brightness < 0.0) {
       brightness = 0.0;
     }
     brightness /= 200.0;
-    hitColour->x = nearestTriangle.r * brightness;
-    hitColour->y = nearestTriangle.g * brightness;
-    hitColour->z = nearestTriangle.b * brightness;
+    hitColour->x = nearestTriangle->r * brightness;
+    hitColour->y = nearestTriangle->g * brightness;
+    hitColour->z = nearestTriangle->b * brightness;
   }
   return hitColour;
 }
 
-bool trace(const struct Point origin, const struct Point direction, const struct Triangle *triangles, int trianglesSize, double *nearestDistance, int *hitTriangleIndex) {
-  *hitTriangleIndex = -1;
+bool trace(const struct Point origin, const struct Point direction, const struct Triangle *triangles, int trianglesSize, double *nearestDistance, struct Triangle **hitTriangle) {
+  *hitTriangle = NULL;
   for (int triangleIndex = 0; triangleIndex < trianglesSize; triangleIndex++) {
     double triangleDistance;
-    struct Triangle triangle = triangles[triangleIndex];
     double distance = DBL_MAX;
-    if(intersectsTriangle(origin, direction, triangle, &distance) && distance < *nearestDistance) {
+    if(intersectsTriangle(origin, direction, triangles[triangleIndex], &distance) && distance < *nearestDistance) {
       *nearestDistance = distance;
-      *hitTriangleIndex = triangleIndex;
+      *hitTriangle = &triangles[triangleIndex];
     }
   }
-  return (*hitTriangleIndex != -1);
+  return (*hitTriangle != NULL);
 }
 
 VALUE methRender(VALUE rb_iSelf, VALUE rb_iWidth, VALUE rb_iHeight, VALUE rb_iHorizontalFov, VALUE rb_iVerticalFov, VALUE rb_iTriangles, VALUE rb_iImage, VALUE rb_iRandomSeed) {
