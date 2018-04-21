@@ -37,3 +37,12 @@ VALUE rb_cTriangleFromTriangle(const struct Triangle triangle) {
 
   return rb_iTriangle;
 }
+
+struct Triangle *trianglesFromRb_cTriangles(const VALUE rb_iTriangles, int *trianglesSize) {
+  *trianglesSize = NUM2INT(rb_funcall(rb_iTriangles, rb_intern("size"), 0));
+  struct Triangle *triangles = malloc(sizeof(struct Triangle) * *trianglesSize);
+  for (int i = 0; i < *trianglesSize; i++) {
+    triangles[i] = triangleFromRb_cTriangle(rb_ary_entry(rb_iTriangles, i));
+  }
+  return triangles;
+}

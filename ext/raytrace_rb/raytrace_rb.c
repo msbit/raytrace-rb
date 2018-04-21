@@ -3,6 +3,7 @@
 #include <float.h>
 #include <math.h>
 #include <pthread.h>
+#include <stdbool.h>
 
 #include "point.h"
 #include "triangle.h"
@@ -25,8 +26,9 @@ extern VALUE rb_cTriangle;
 void Init_raytrace_rb();
 
 VALUE methRender(VALUE, VALUE, VALUE, VALUE, VALUE, VALUE, VALUE, VALUE);
-double intersectsTriangle(struct Point, struct Point, struct Triangle);
+bool intersectsTriangle(struct Point, struct Point, struct Triangle, double*);
 struct Point *castRay(struct Point, struct Point, struct Triangle*, int, int);
+bool trace(const struct Point, const struct Point, const struct Triangle*, int, double*, int*);
 
 void Init_raytrace_rb() {
   rb_mRaytraceRb = rb_define_module("RaytraceRb");
@@ -57,16 +59,10 @@ struct Point *castRay(struct Point origin, struct Point direction, struct Triang
   }
 
   double nearestDistance = DBL_MAX;
-  struct Triangle nearestTriangle;
-  for (int triangleIndex = 0; triangleIndex < trianglesSize; triangleIndex++) {
-    struct Triangle triangle = triangles[triangleIndex];
-    double t = intersectsTriangle(origin, direction, triangle);
-    if (t < nearestDistance) {
-      nearestDistance = t;
-      nearestTriangle = triangle;
-    }
-  }
-  if (nearestDistance < DBL_MAX) {
+  int nearestTriangleIndex = -1;
+
+  if (trace(origin, direction, triangles, trianglesSize, &nearestDistance, &nearestTriangleIndex)) {
+    struct Triangle nearestTriangle = triangles[nearestTriangleIndex];
     double brightness = 200.0 - nearestDistance;
     if (brightness < 0.0) {
       brightness = 0.0;
@@ -79,18 +75,28 @@ struct Point *castRay(struct Point origin, struct Point direction, struct Triang
   return hitColour;
 }
 
+bool trace(const struct Point origin, const struct Point direction, const struct Triangle *triangles, int trianglesSize, double *nearestDistance, int *hitTriangleIndex) {
+  *hitTriangleIndex = -1;
+  for (int triangleIndex = 0; triangleIndex < trianglesSize; triangleIndex++) {
+    double triangleDistance;
+    struct Triangle triangle = triangles[triangleIndex];
+    double distance = DBL_MAX;
+    if(intersectsTriangle(origin, direction, triangle, &distance) && distance < *nearestDistance) {
+      *nearestDistance = distance;
+      *hitTriangleIndex = triangleIndex;
+    }
+  }
+  return (*hitTriangleIndex != -1);
+}
+
 VALUE methRender(VALUE rb_iSelf, VALUE rb_iWidth, VALUE rb_iHeight, VALUE rb_iHorizontalFov, VALUE rb_iVerticalFov, VALUE rb_iTriangles, VALUE rb_iImage, VALUE rb_iRandomSeed) {
   int width = NUM2INT(rb_iWidth);
   int height = NUM2INT(rb_iHeight);
-  int trianglesSize = NUM2INT(rb_funcall(rb_iTriangles, rb_intern("size"), 0));
+  int trianglesSize = 0;
   double horizontalFov = rb_float_value(rb_iHorizontalFov);
   double verticalFov = rb_float_value(rb_iVerticalFov);
   struct Point origin = {0.0, 0.0, 0.0};
-  struct Triangle triangles[trianglesSize];
-
-  for (int i = 0; i < trianglesSize; i++) {
-    triangles[i] = triangleFromRb_cTriangle(rb_ary_entry(rb_iTriangles, i));
-  }
+  struct Triangle *triangles = trianglesFromRb_cTriangles(rb_iTriangles, &trianglesSize);
 
   VALUE rb_iRandomSeedString = rb_big2str(rb_iRandomSeed, 10);
   char *randomSeed = StringValueCStr(rb_iRandomSeedString);
@@ -127,35 +133,39 @@ VALUE methRender(VALUE rb_iSelf, VALUE rb_iWidth, VALUE rb_iHeight, VALUE rb_iHo
     }
   }
   rb_funcall(rb_iImage, rb_intern("save"), 1, rb_str_new2(imageName));
+
+  free(triangles);
+
   return Qnil;
 }
 
-double intersectsTriangle(struct Point origin, struct Point direction, struct Triangle triangle) {
+bool intersectsTriangle(struct Point origin, struct Point direction, struct Triangle triangle, double *hitDistance) {
   double epsilon = rb_float_value(rb_const_get(rb_cFloat, rb_intern("EPSILON")));
 
   struct Point pvec = crossProduct(direction, triangle.edge2);
   double det = dotProduct(triangle.edge1, pvec);
   if (det < epsilon) {
-    return DBL_MAX;
+    return false;
   }
 
   struct Point tvec = minus(origin, triangle.vertex0);
   double u = dotProduct(tvec, pvec);
   if (u < 0.0 || u > det) {
-    return DBL_MAX;
+    return false;
   }
 
   struct Point qvec = crossProduct(tvec, triangle.edge1);
   double v = dotProduct(direction, qvec);
   if (v < 0.0 || (u + v) > det) {
-    return DBL_MAX;
+    return false;
   }
 
   double inv_det = 1.0 / det;
   double t = inv_det * dotProduct(triangle.edge2, qvec);
   if (t < epsilon) {
-    return DBL_MAX;
+    return false;
   }
 
-  return t;
+  *hitDistance = t;
+  return true;
 }

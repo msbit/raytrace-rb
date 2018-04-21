@@ -20,5 +20,6 @@ void initRb_cTriangle(const VALUE);
 
 struct Triangle triangleFromRb_cTriangle(const VALUE);
 struct Triangle *trianglesFromRb_cTriangles(const VALUE, int*);
+VALUE rb_cTriangleFromTriangle(const struct Triangle);
 
 #endif
