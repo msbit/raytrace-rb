@@ -16,8 +16,6 @@ struct ThreadArgument {
   struct Triangle *triangles;
 };
 
-VALUE rb_mChunkyPng = Qnil;
-VALUE rb_mColor = Qnil;
 VALUE rb_mRaytraceRb = Qnil;
 
 extern VALUE rb_cPoint;
@@ -31,7 +29,6 @@ double intersectsTriangle(struct Point, struct Point, struct Triangle);
 struct Point *castRay(struct Point, struct Point, struct Triangle*, int, int);
 
 void Init_raytrace_rb() {
-  rb_mChunkyPng = rb_define_module("ChunkyPNG");
   rb_mRaytraceRb = rb_define_module("RaytraceRb");
 
   initRb_cPoint(rb_mRaytraceRb);
@@ -39,8 +36,6 @@ void Init_raytrace_rb() {
 
   rb_cRayTracer = rb_define_class_under(rb_mRaytraceRb, "RayTracer", rb_cObject);
   rb_define_method(rb_cRayTracer, "render", methRender, 7);
-
-  rb_mColor = rb_define_module_under(rb_mChunkyPng, "Color");
 }
 
 void *performWork(void *argument) {

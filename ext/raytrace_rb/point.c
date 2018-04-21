@@ -3,6 +3,8 @@
 #include "point.h"
 
 VALUE rb_cPoint;
+VALUE rb_mChunkyPng;
+VALUE rb_mColor;
 
 void initRb_cPoint(VALUE under) {
   rb_cPoint = rb_define_class_under(under, "Point", rb_cObject);
@@ -10,6 +12,9 @@ void initRb_cPoint(VALUE under) {
   rb_define_method(rb_cPoint, "dot_product", methDotProduct, 1);
   rb_define_method(rb_cPoint, "minus", methMinus, 1);
   rb_define_method(rb_cPoint, "normalise!", methNormalise, 0);
+
+  rb_mChunkyPng = rb_define_module("ChunkyPNG");
+  rb_mColor = rb_define_module_under(rb_mChunkyPng, "Color");
 }
 
 VALUE methCrossProduct(VALUE rb_iSelf, VALUE rb_iOther) {
@@ -71,11 +76,9 @@ VALUE rb_cPointFromPoint(struct Point point) {
 }
 
 VALUE rb_cColorFromPoint(struct Point point) {
-  int colour = ((int8_t)(point.x) << 24) |
-               ((int8_t)(point.y) << 16) |
-               ((int8_t)(point.z) << 8) |
-               255;
-  return INT2NUM(colour);
+  return rb_funcall(rb_mColor, rb_intern("rgba"), 4,
+                    INT2FIX((uint8_t)point.x), INT2FIX((uint8_t)point.y),
+                    INT2FIX((uint8_t)point.z), INT2FIX(255));
 }
 
 struct Point crossProduct(struct Point self, struct Point other) {
