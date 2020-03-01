@@ -29,10 +29,10 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency 'chunky_png', '~> 1.3.0'
 
-  spec.add_development_dependency 'byebug', '~> 10.0.0'
-  spec.add_development_dependency 'bundler', '~> 1.17.0'
-  spec.add_development_dependency 'rake', '~> 10.5.0'
-  spec.add_development_dependency 'rake-compiler', '~> 1.0.0'
+  spec.add_development_dependency 'byebug', '~> 11.1.0'
+  spec.add_development_dependency 'bundler', '~> 2.1.0'
+  spec.add_development_dependency 'rake', '~> 13.0.0'
+  spec.add_development_dependency 'rake-compiler', '~> 1.1.0'
 
   spec.extensions << 'ext/raytrace_rb/extconf.rb'
 end
